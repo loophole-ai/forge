@@ -113,7 +113,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: app/opencode
-        run: bun install --frozen-lockfile --os=${{ matrix.os }} --cpu="${{ matrix.install_cpu || matrix.cpu }}"
+        run: bun install --os=${{ matrix.os }} --cpu="${{ matrix.install_cpu || matrix.cpu }}"
 
       - name: Install rpm tooling
         if: runner.os == 'Linux'

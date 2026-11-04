@@ -95,7 +95,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: app/opencode
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build all CLI targets
         working-directory: app/opencode/packages/cli
