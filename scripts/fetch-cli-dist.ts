@@ -2,6 +2,7 @@
 // Downloads one published CLI platform package from npm and lays it out like
 // packages/cli/dist/cli-<target>, which is what the desktop prebuild expects.
 // Using the published package means the desktop does not have to rebuild the CLI.
+import { existsSync } from "node:fs"
 import { cp, mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
@@ -30,8 +31,10 @@ try {
   const dest = path.join(out, entry.package.replace("@loophole-ai/", ""))
   await rm(dest, { recursive: true, force: true })
   await cp(source, dest, { recursive: true })
-  const binary = path.join(dest, "bin", entry.os === "win32" ? "loophole-cli.exe" : "loophole-cli")
-  if (!(await Bun.file(binary).exists())) throw new Error(`CLI binary missing after copy: ${binary}`)
+  // New packages ship `loophole-cli`; older published packages still ship `loophole`.
+  const names = entry.os === "win32" ? ["loophole-cli.exe", "loophole.exe"] : ["loophole-cli", "loophole"]
+  const binary = names.map((name) => path.join(dest, "bin", name)).find((file) => existsSync(file))
+  if (!binary) throw new Error(`CLI binary missing after copy: ${path.join(dest, "bin", names[0])}`)
   console.log(`prepared ${entry.package}@${version} -> ${dest}`)
 } finally {
   await rm(directory, { recursive: true, force: true })
