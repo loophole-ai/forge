@@ -23,7 +23,7 @@ await Bun.write(
   notes,
   `## Loophole CLI ${tag}
 
-Open-source AI coding agent for the terminal.
+AI coding agent for the terminal.
 
 ### Install
 

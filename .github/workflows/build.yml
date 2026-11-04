@@ -113,7 +113,6 @@ jobs:
           bun run "$GITHUB_WORKSPACE/builder/scripts/publish-cli.ts"
 
       - name: Package release assets
-        if: env.PUBLISH_RELEASE == 'true'
         run: bun run "$GITHUB_WORKSPACE/builder/scripts/archive.ts"
 
       - name: Create GitHub release
