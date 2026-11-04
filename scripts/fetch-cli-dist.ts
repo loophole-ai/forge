@@ -30,7 +30,7 @@ try {
   const dest = path.join(out, entry.package.replace("@loophole-ai/", ""))
   await rm(dest, { recursive: true, force: true })
   await cp(source, dest, { recursive: true })
-  const binary = path.join(dest, "bin", entry.os === "win32" ? "loophole.exe" : "loophole")
+  const binary = path.join(dest, "bin", entry.os === "win32" ? "loophole-cli.exe" : "loophole-cli")
   if (!(await Bun.file(binary).exists())) throw new Error(`CLI binary missing after copy: ${binary}`)
   console.log(`prepared ${entry.package}@${version} -> ${dest}`)
 } finally {

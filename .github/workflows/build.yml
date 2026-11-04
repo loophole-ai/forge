@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      APP_DIR: ${{ github.workspace }}/app
+      APP_DIR: ${{ github.workspace }}/app/opencode
       ASSETS_DIR: ${{ github.workspace }}/builder/assets
       GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -66,6 +66,16 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.APP_REPO_TOKEN }}
 
+      - name: Clone upstream opencode
+        working-directory: app
+        shell: bash
+        run: bash ./get_repo.sh
+
+      - name: Apply patches and assets
+        working-directory: app
+        shell: bash
+        run: bash ./prepare_src.sh
+
       - name: Prepare version
         run: |
           set -euo pipefail
@@ -84,11 +94,11 @@ jobs:
           bun-version: 1.4.2
 
       - name: Install dependencies
-        working-directory: app
+        working-directory: app/opencode
         run: bun install --frozen-lockfile
 
       - name: Build all CLI targets
-        working-directory: app/packages/cli
+        working-directory: app/opencode/packages/cli
         env:
           OPENCODE_CHANNEL: prod
         run: bun run script/build.ts

@@ -67,8 +67,8 @@ jobs:
       CLI_VERSION: ${{ inputs.cli_version }}
       OPENCODE_CHANNEL: prod
       OPENCODE_CLI_TARGET: ${{ matrix.target }}
-      OPENCODE_CLI_DIST: ${{ github.workspace }}/app/packages/cli/dist
-      APP_DIR: ${{ github.workspace }}/app
+      OPENCODE_CLI_DIST: ${{ github.workspace }}/app/opencode/packages/cli/dist
+      APP_DIR: ${{ github.workspace }}/app/opencode
       GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     steps:
       - name: Checkout builder
@@ -84,6 +84,16 @@ jobs:
           path: app
           fetch-depth: 1
           token: ${{ secrets.APP_REPO_TOKEN }}
+
+      - name: Clone upstream opencode
+        working-directory: app
+        shell: bash
+        run: bash ./get_repo.sh
+
+      - name: Apply patches and assets
+        working-directory: app
+        shell: bash
+        run: bash ./prepare_src.sh
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -102,7 +112,7 @@ jobs:
         run: bun run "$GITHUB_WORKSPACE/builder/scripts/fetch-cli-dist.ts"
 
       - name: Install dependencies
-        working-directory: app
+        working-directory: app/opencode
         run: bun install --frozen-lockfile --os=${{ matrix.os }} --cpu="${{ matrix.install_cpu || matrix.cpu }}"
 
       - name: Install rpm tooling
@@ -110,17 +120,17 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends rpm
 
       - name: Prepare
-        working-directory: app/packages/desktop
+        working-directory: app/opencode/packages/desktop
         run: bun ./scripts/prepare.ts
 
       - name: Build
-        working-directory: app/packages/desktop
+        working-directory: app/opencode/packages/desktop
         env:
           NODE_OPTIONS: --max-old-space-size=4096
         run: bun run build
 
       - name: Package
-        working-directory: app/packages/desktop
+        working-directory: app/opencode/packages/desktop
         timeout-minutes: 60
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -132,14 +142,14 @@ jobs:
           name: desktop-${{ matrix.target }}
           if-no-files-found: error
           path: |
-            app/packages/desktop/dist/*.dmg
-            app/packages/desktop/dist/*.zip
-            app/packages/desktop/dist/*.exe
-            app/packages/desktop/dist/*.blockmap
-            app/packages/desktop/dist/*.AppImage
-            app/packages/desktop/dist/*.deb
-            app/packages/desktop/dist/*.rpm
-            app/packages/desktop/dist/latest*.yml
+            app/opencode/packages/desktop/dist/*.dmg
+            app/opencode/packages/desktop/dist/*.zip
+            app/opencode/packages/desktop/dist/*.exe
+            app/opencode/packages/desktop/dist/*.blockmap
+            app/opencode/packages/desktop/dist/*.AppImage
+            app/opencode/packages/desktop/dist/*.deb
+            app/opencode/packages/desktop/dist/*.rpm
+            app/opencode/packages/desktop/dist/latest*.yml
 
   release:
     name: publish ${{ inputs.version }}

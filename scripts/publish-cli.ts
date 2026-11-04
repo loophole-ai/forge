@@ -48,7 +48,7 @@ const postinstall = path.join(cliDir, "script", "postinstall.mjs")
 if (!(await Bun.file(postinstall).exists())) throw new Error(`Missing postinstall script: ${postinstall}`)
 await Bun.write(path.join(launcherDir, "postinstall.mjs"), Bun.file(postinstall))
 await Bun.write(
-  path.join(launcherDir, "bin", "loophole.exe"),
+  path.join(launcherDir, "bin", "loophole-cli.exe"),
   [
     `echo "Error: @loophole-ai/cli's postinstall script was not run." >&2`,
     'echo "" >&2',
@@ -63,12 +63,12 @@ await Bun.write(
   JSON.stringify(
     {
       name: "@loophole-ai/cli",
-      bin: { loophole: "./bin/loophole.exe", loophole2: "./bin/loophole.exe" },
+      bin: { "loophole-cli": "./bin/loophole-cli.exe", lhc: "./bin/loophole-cli.exe" },
       scripts: { postinstall: "node ./postinstall.mjs" },
       version,
-      license: "AGPL-3.0",
-      repository: { type: "git", url: "git+https://github.com/loophole-ai/loophole-app.git" },
-      homepage: "https://github.com/loophole-ai/loophole-app",
+      license: "UNLICENSED",
+      repository: { type: "git", url: "git+https://github.com/loophole-ai/cli.git" },
+      homepage: "https://github.com/loophole-ai/cli",
       os: ["darwin", "linux", "win32"],
       cpu: ["arm64", "x64"],
       optionalDependencies: binaries,

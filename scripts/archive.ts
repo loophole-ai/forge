@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 // Packages every built target into a release asset:
-//   loophole-<target>.zip     (windows, darwin)
-//   loophole-<target>.tar.gz  (linux, including musl)
+//   loophole-cli-<target>.zip     (windows, darwin)
+//   loophole-cli-<target>.tar.gz  (linux, including musl)
 // Each archive contains the bare binary at its root so `brew install`, WinGet,
-// and manual downloads all resolve to `loophole` / `loophole.exe` directly.
+// and manual downloads all resolve to `loophole-cli` / `loophole-cli.exe` directly.
 import { existsSync } from "node:fs"
 import path from "node:path"
 import { $ } from "bun"
@@ -29,12 +29,12 @@ for (const relative of platformPackages.toSorted()) {
   const target = pkg.name.slice("@loophole-ai/cli-".length)
   if (version && pkg.version !== version) throw new Error(`${pkg.name} is ${pkg.version}, expected ${version}`)
   const windows = target.startsWith("windows")
-  const binary = path.join(dir, "bin", windows ? "loophole.exe" : "loophole")
+  const binary = path.join(dir, "bin", windows ? "loophole-cli.exe" : "loophole-cli")
   if (!(await Bun.file(binary).exists())) throw new Error(`Missing binary: ${binary}`)
 
-  const file = path.join(out, `loophole-${target}${windows || target.startsWith("darwin") ? ".zip" : ".tar.gz"}`)
+  const file = path.join(out, `loophole-cli-${target}${windows || target.startsWith("darwin") ? ".zip" : ".tar.gz"}`)
   if (file.endsWith(".zip")) await $`zip -q -j ${file} ${binary}`
-  else await $`tar -czf ${file} -C ${path.dirname(binary)} loophole`
+  else await $`tar -czf ${file} -C ${path.dirname(binary)} loophole-cli`
   assets.push(file)
   console.log(`packaged ${path.basename(file)}`)
 }

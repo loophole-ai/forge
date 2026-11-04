@@ -83,7 +83,7 @@ secrets and drop `CSC_IDENTITY_AUTO_DISCOVERY`.
 
 ## Homebrew (`homebrew`)
 
-Manual workflow, input `version`. Regenerates `Formula/loophole.rb` and pushes it
+Manual workflow, input `version`. Regenerates `Formula/loophole-cli.rb` and pushes it
 to `loophole-ai/homebrew-tap` (must exist and be **public**).
 
 Uses archives from release `v<version>` in `loophole-ai/cli` when `assets/`
@@ -91,7 +91,7 @@ exists, otherwise falls back to the immutable npm tarballs — so it works even
 without a GitHub release.
 
 ```bash
-brew install loophole-ai/tap/loophole
+brew install loophole-ai/tap/loophole-cli
 ```
 
 ## Required secrets
@@ -127,7 +127,7 @@ LOOPHOLE_VERSION=1.0.3 DESKTOP_DIST=/path/to/assets GH_TOKEN=dummy \
 | npm | `npm i -g @loophole-ai/cli` |
 | Bun | `bun add -g @loophole-ai/cli` |
 | curl | `curl -fsSL https://raw.githubusercontent.com/loophole-ai/forge/main/install.sh \| bash` |
-| Homebrew | `brew install loophole-ai/tap/loophole` |
+| Homebrew | `brew install loophole-ai/tap/loophole-cli` |
 
 The installed command is `loophole-cli`, with `lhc` as the short alias.
 
