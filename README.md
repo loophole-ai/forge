@@ -1,14 +1,14 @@
 # Loophole Forge
 
 Build and release automation for Loophole. This repo contains **no product code**;
-it builds and ships the CLI and the desktop app from
-[`loophole-ai/loophole-app`](https://github.com/loophole-ai/loophole-app).
+it builds and ships the CLI and the desktop app from the private
+`loophole-ai/loophole-app` source repository.
 
 ## Repos
 
 | Repo | Purpose |
 |---|---|
-| [`loophole-ai/loophole-app`](https://github.com/loophole-ai/loophole-app) | Source code |
+| `loophole-ai/loophole-app` | Private source repository |
 | [`loophole-ai/forge`](https://github.com/loophole-ai/forge) | This repo — build + release automation |
 | [`loophole-ai/cli`](https://github.com/loophole-ai/cli) | CLI release assets only |
 | [`loophole-ai/desktop`](https://github.com/loophole-ai/desktop) | Desktop release assets only |
@@ -26,7 +26,7 @@ is what the desktop updater depends on.
 
 ## CLI (`cli-builder`)
 
-Inputs: `version` (e.g. `1.0.8`), `ref` (default `loophole`), `publish_npm`,
+Inputs: `version` (e.g. `1.0.8`), `ref` (default `main`), `publish_npm`,
 `publish_release`, `publish_homebrew`.
 
 1. Builds all 12 targets on Linux (Bun cross-compiles macOS/Windows)
@@ -101,8 +101,10 @@ brew install loophole-ai/tap/loophole
 | `NPM_TOKEN` | npm granular token, `@loophole-ai`, read/write, **2FA bypass on** | cli-builder |
 | `RELEASE_TOKEN` | GitHub fine-grained PAT with `contents: write` on `loophole-ai/cli`, `loophole-ai/desktop`, and `loophole-ai/homebrew-tap` | all workflows |
 | `HOMEBREW_TAP_TOKEN` | optional, overrides `RELEASE_TOKEN` for the tap | homebrew |
+| `APP_REPO_TOKEN` | GitHub fine-grained PAT with `contents: read` on the private `loophole-ai/loophole-app` | cli-builder, desktop-builder |
 
-`GITHUB_TOKEN` alone is not enough: this repo cannot write to the release repos.
+`GITHUB_TOKEN` alone is not enough: this repo cannot read the private source repo
+or write to the release repos.
 
 ## Local usage
 
@@ -126,6 +128,8 @@ LOOPHOLE_VERSION=1.0.3 DESKTOP_DIST=/path/to/assets GH_TOKEN=dummy \
 | Bun | `bun add -g @loophole-ai/cli` |
 | curl | `curl -fsSL https://raw.githubusercontent.com/loophole-ai/forge/main/install.sh \| bash` |
 | Homebrew | `brew install loophole-ai/tap/loophole` |
+
+The installed command is `loophole-cli`, with `lhc` as the short alias.
 
 ## Notes
 

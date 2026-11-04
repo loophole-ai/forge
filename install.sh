@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP=loophole
-SOURCE_APP=loophole
+APP=loophole-cli
+SOURCE_APP=loophole-cli
 INSTALL_DIR="${LOOPHOLE_INSTALL_DIR:-$HOME/.loophole/bin}"
 
 MUTED='\033[0;2m'
@@ -26,7 +26,7 @@ Examples:
     curl -fsSL https://github.com/loophole-ai/cli/releases/latest/download/install.sh | bash
     curl -fsSL https://raw.githubusercontent.com/loophole-ai/forge/main/install.sh | bash
     curl -fsSL .../install.sh | bash -s -- --version 1.0.8
-    ./install.sh --binary /path/to/loophole
+    ./install.sh --binary /path/to/loophole-cli
 EOF
 }
 
@@ -220,27 +220,30 @@ install_from_binary() {
     chmod 755 "$INSTALL_DIR/$installed_binary"
 }
 
-install_legacy_shim() {
+install_shortcut() {
     local shim_os="${os:-}"
     if [[ -z "$shim_os" ]]; then
         case "$(uname -s)" in
             MINGW*|MSYS*|CYGWIN*) shim_os="windows" ;;
         esac
     fi
-    rm -f "$INSTALL_DIR/loophole2" "$INSTALL_DIR/loophole2.exe" "$INSTALL_DIR/loophole2.cmd"
+    # `lhc` is the short alias for the CLI; keep it next to the real binary.
+    rm -f "$INSTALL_DIR/lhc" "$INSTALL_DIR/lhc.exe" "$INSTALL_DIR/lhc.cmd"
+    # Drop shims from older installs that used the bare `loophole` name.
+    rm -f "$INSTALL_DIR/loophole" "$INSTALL_DIR/loophole.exe" "$INSTALL_DIR/loophole2" "$INSTALL_DIR/loophole2.exe" "$INSTALL_DIR/loophole2.cmd"
     if [[ "$shim_os" == "windows" ]]; then
-        cat > "$INSTALL_DIR/loophole2.cmd" <<'EOF'
+        cat > "$INSTALL_DIR/lhc.cmd" <<'EOF'
 @echo off
-"%~dp0loophole.exe" %*
+"%~dp0loophole-cli.exe" %*
 exit /b %errorlevel%
 EOF
         return
     fi
-    cat > "$INSTALL_DIR/loophole2" <<'EOF'
+    cat > "$INSTALL_DIR/lhc" <<'EOF'
 #!/bin/sh
-exec "$(dirname "$0")/loophole" "$@"
+exec "$(dirname "$0")/loophole-cli" "$@"
 EOF
-    chmod 755 "$INSTALL_DIR/loophole2"
+    chmod 755 "$INSTALL_DIR/lhc"
 }
 
 if [[ -n "$binary_path" ]]; then
@@ -249,7 +252,7 @@ else
     check_version
     download_and_install
 fi
-install_legacy_shim
+install_shortcut
 
 add_to_path() {
     local config_file=$1
@@ -258,7 +261,7 @@ add_to_path() {
     if grep -Fxq "$command" "$config_file"; then
         print_message info "Command already exists in $config_file, skipping write."
     elif [[ -w $config_file ]]; then
-        echo -e "\n# loophole" >> "$config_file"
+        echo -e "\n# loophole-cli" >> "$config_file"
         echo "$command" >> "$config_file"
         print_message info "${MUTED}Added ${NC}$INSTALL_DIR ${MUTED}to \$PATH in ${NC}$config_file"
     else
@@ -303,14 +306,15 @@ if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
 fi
 
 echo -e ""
-echo -e "${MUTED}Loophole installed to${NC} $INSTALL_DIR/loophole"
+echo -e "${MUTED}Loophole CLI installed to${NC} $INSTALL_DIR/loophole-cli"
 echo -e ""
 if [[ -z "$binary_path" ]]; then
     echo -e "${MUTED}To get started, open a new terminal and run:${NC}"
-    echo -e "  loophole"
+    echo -e "  loophole-cli"
+    echo -e "  lhc            ${MUTED}# short alias${NC}"
 else
     echo -e "${MUTED}Open a new terminal and run the installed binary.${NC}"
 fi
 echo -e ""
-echo -e "${MUTED}Docs:${NC} https://github.com/loophole-ai/loophole-app"
+echo -e "${MUTED}Docs:${NC} https://github.com/loophole-ai/cli"
 echo -e ""

@@ -10,7 +10,7 @@ on:
       ref:
         description: "loophole-ai/loophole-app ref (branch, tag, or SHA)"
         required: true
-        default: "loophole"
+        default: "main"
       publish_npm:
         description: "Publish @loophole-ai/cli + 12 platform packages to npm"
         type: boolean
@@ -47,7 +47,7 @@ jobs:
       RELEASE_REPO: loophole-ai/cli
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       RAW_VERSION: ${{ inputs.version || github.ref_name }}
-      APP_REF: ${{ inputs.ref || 'loophole' }}
+      APP_REF: ${{ inputs.ref || 'main' }}
       PUBLISH_NPM: ${{ github.event_name == 'push' || inputs.publish_npm }}
       PUBLISH_RELEASE: ${{ github.event_name == 'push' || inputs.publish_release }}
       PUBLISH_HOMEBREW: ${{ github.event_name != 'push' && inputs.publish_homebrew }}
@@ -61,9 +61,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: loophole-ai/loophole-app
-          ref: ${{ inputs.ref || 'loophole' }}
+          ref: ${{ inputs.ref || 'main' }}
           path: app
           fetch-depth: 1
+          token: ${{ secrets.APP_REPO_TOKEN }}
 
       - name: Prepare version
         run: |

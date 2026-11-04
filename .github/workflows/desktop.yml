@@ -14,7 +14,7 @@ on:
       ref:
         description: "loophole-ai/loophole-app ref (branch, tag, or SHA)"
         required: true
-        default: "loophole"
+        default: "main"
       publish_release:
         description: "Create the GitHub release with installers + updater manifests"
         type: boolean
@@ -80,9 +80,10 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: loophole-ai/loophole-app
-          ref: ${{ inputs.ref || 'loophole' }}
+          ref: ${{ inputs.ref || 'main' }}
           path: app
           fetch-depth: 1
+          token: ${{ secrets.APP_REPO_TOKEN }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
