@@ -41,31 +41,37 @@ jobs:
             flag: --mac --arm64
             os: darwin
             cpu: arm64
+            desktop_target: darwin-arm64
           - target: x86_64-apple-darwin
             host: macos-14
             flag: --mac --x64
             os: darwin
             cpu: x64
             install_cpu: "*"
+            desktop_target: darwin-x64
           - target: x86_64-pc-windows-msvc
             host: windows-latest
             flag: --win
             os: win32
             cpu: x64
+            desktop_target: windows-x64
           - target: x86_64-unknown-linux-gnu
             host: ubuntu-latest
             flag: --linux
             os: linux
             cpu: x64
+            desktop_target: linux-x64
           - target: aarch64-unknown-linux-gnu
             host: ubuntu-24.04-arm
             flag: --linux --arm64
             os: linux
             cpu: arm64
+            desktop_target: linux-arm64
     env:
       LOOPHOLE_VERSION: ${{ inputs.version }}
       CLI_VERSION: ${{ inputs.cli_version }}
       OPENCODE_CHANNEL: prod
+      OPENCODE_TARGET: ${{ matrix.desktop_target }}
       OPENCODE_CLI_TARGET: ${{ matrix.target }}
       OPENCODE_CLI_DIST: ${{ github.workspace }}/app/opencode/packages/cli/dist
       APP_DIR: ${{ github.workspace }}/app/opencode
