@@ -2,6 +2,7 @@
 // Regenerates Formula/loophole-cli.rb in the Loophole Homebrew tap and pushes it.
 // Uses GitHub release archives when they exist; otherwise falls back to the
 // immutable npm tarballs so Homebrew works even without a GitHub release.
+import { rm } from "node:fs/promises"
 import path from "node:path"
 import { $ } from "bun"
 
@@ -117,8 +118,11 @@ if (clone.exitCode !== 0) {
 
 const branch = (await $`git branch --show-current`.cwd(work).quiet().text()).trim() || "main"
 await $`mkdir -p ${path.join(work, "Formula")}`.quiet()
-await Bun.write(path.join(work, "Formula", "loophole-cli.rb"), formula)
-await $`git add Formula/loophole-cli.rb`.cwd(work)
+const formulaPath = path.join(work, "Formula", "loophole-cli.rb")
+const previousPath = path.join(work, "Formula", "loophole.rb")
+if (await Bun.file(previousPath).exists()) await rm(previousPath, { force: true })
+await Bun.write(formulaPath, formula)
+await $`git add -A Formula`.cwd(work)
 const changed = (await $`git diff --cached --quiet`.cwd(work).nothrow()).exitCode !== 0
 if (changed) {
   await $`git -c user.name=loophole-bot -c user.email=bot@loophole.ai commit -m ${`loophole-cli ${version}`}`.cwd(work)
