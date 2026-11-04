@@ -97,8 +97,6 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.2
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -118,10 +116,6 @@ jobs:
       - name: Install rpm tooling
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends rpm
-
-      - name: Prepare
-        working-directory: app/opencode/packages/desktop
-        run: bun ./scripts/prepare.ts
 
       - name: Build
         working-directory: app/opencode/packages/desktop
@@ -173,8 +167,6 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.2
 
       - name: Download installers
         uses: actions/download-artifact@v4
