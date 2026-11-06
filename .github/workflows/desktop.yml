@@ -37,13 +37,13 @@ jobs:
       matrix:
         include:
           - target: aarch64-apple-darwin
-            host: macos-14
+            host: macos-15
             flag: --mac --arm64
             os: darwin
             cpu: arm64
             desktop_target: darwin-arm64
           - target: x86_64-apple-darwin
-            host: macos-14
+            host: macos-15-intel
             flag: --mac --x64
             os: darwin
             cpu: x64
