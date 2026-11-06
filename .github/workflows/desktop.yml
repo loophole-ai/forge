@@ -123,6 +123,19 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends rpm
 
+      - name: Select Xcode 26
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          BEST=$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' | sort -V | tail -1)
+          if [ -z "$BEST" ]; then
+            echo "::error::Xcode 26 not found on this runner"
+            exit 1
+          fi
+          echo "Selecting $BEST"
+          sudo xcode-select -s "$BEST/Contents/Developer"
+          xcodebuild -version
+
       - name: Build
         working-directory: app/opencode/packages/desktop
         env:
