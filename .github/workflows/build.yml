@@ -66,12 +66,23 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.APP_REPO_TOKEN }}
 
-      - name: Clone upstream opencode
+      - name: Check out the Loophole source branch
         working-directory: app
         shell: bash
-        run: bash ./get_repo.sh
+        env:
+          SRC_TOKEN: ${{ secrets.APP_REPO_TOKEN }}
+          SRC_BRANCH: ${{ vars.LOOPHOLE_SRC_BRANCH || 'loophole' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SRC_TOKEN:-}" ]; then
+            echo "::error::APP_REPO_TOKEN is not set; it must be able to read loophole-ai/loophole-app"
+            exit 1
+          fi
+          export LOOPHOLE_SRC_URL="https://x-access-token:${SRC_TOKEN}@github.com/loophole-ai/loophole-app.git"
+          export LOOPHOLE_SRC_BRANCH="${SRC_BRANCH}"
+          bash ./get_repo.sh
 
-      - name: Apply patches and assets
+      - name: Prepare the source tree
         working-directory: app
         shell: bash
         run: bash ./prepare_src.sh
