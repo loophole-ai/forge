@@ -12,9 +12,9 @@ on:
         required: true
         default: "1.0.8"
       ref:
-        description: "loophole-ai/loophole-app ref (branch, tag, or SHA)"
+        description: "loophole-ai/loophole-app branch holding the source (the fork branch)"
         required: true
-        default: "main"
+        default: "loophole"
       publish_release:
         description: "Create the GitHub release with installers + updater manifests"
         type: boolean
@@ -73,8 +73,8 @@ jobs:
       OPENCODE_CHANNEL: prod
       OPENCODE_TARGET: ${{ matrix.desktop_target }}
       OPENCODE_CLI_TARGET: ${{ matrix.target }}
-      OPENCODE_CLI_DIST: ${{ github.workspace }}/app/opencode/packages/cli/dist
-      APP_DIR: ${{ github.workspace }}/app/opencode
+      OPENCODE_CLI_DIST: ${{ github.workspace }}/app/packages/cli/dist
+      APP_DIR: ${{ github.workspace }}/app
       GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     steps:
       - name: Checkout builder
@@ -86,20 +86,10 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: loophole-ai/loophole-app
-          ref: ${{ inputs.ref || 'main' }}
+          ref: ${{ inputs.ref || 'loophole' }}
           path: app
           fetch-depth: 1
           token: ${{ secrets.APP_REPO_TOKEN }}
-
-      - name: Clone upstream opencode
-        working-directory: app
-        shell: bash
-        run: bash ./get_repo.sh
-
-      - name: Apply patches and assets
-        working-directory: app
-        shell: bash
-        run: bash ./prepare_src.sh
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -116,7 +106,7 @@ jobs:
         run: bun run "$GITHUB_WORKSPACE/builder/scripts/fetch-cli-dist.ts"
 
       - name: Install dependencies
-        working-directory: app/opencode
+        working-directory: app
         run: bun install --os=${{ matrix.os }} --cpu="${{ matrix.install_cpu || matrix.cpu }}"
 
       - name: Install rpm tooling
@@ -137,13 +127,13 @@ jobs:
           xcodebuild -version
 
       - name: Build
-        working-directory: app/opencode/packages/desktop
+        working-directory: app/packages/desktop
         env:
           NODE_OPTIONS: --max-old-space-size=4096
         run: bun run build
 
       - name: Package
-        working-directory: app/opencode/packages/desktop
+        working-directory: app/packages/desktop
         timeout-minutes: 60
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -155,14 +145,14 @@ jobs:
           name: desktop-${{ matrix.target }}
           if-no-files-found: error
           path: |
-            app/opencode/packages/desktop/dist/*.dmg
-            app/opencode/packages/desktop/dist/*.zip
-            app/opencode/packages/desktop/dist/*.exe
-            app/opencode/packages/desktop/dist/*.blockmap
-            app/opencode/packages/desktop/dist/*.AppImage
-            app/opencode/packages/desktop/dist/*.deb
-            app/opencode/packages/desktop/dist/*.rpm
-            app/opencode/packages/desktop/dist/latest*.yml
+            app/packages/desktop/dist/*.dmg
+            app/packages/desktop/dist/*.zip
+            app/packages/desktop/dist/*.exe
+            app/packages/desktop/dist/*.blockmap
+            app/packages/desktop/dist/*.AppImage
+            app/packages/desktop/dist/*.deb
+            app/packages/desktop/dist/*.rpm
+            app/packages/desktop/dist/latest*.yml
 
   release:
     name: publish ${{ inputs.version }}
