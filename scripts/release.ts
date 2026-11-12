@@ -19,13 +19,34 @@ const files = await Array.fromAsync(new Bun.Glob("*").scan({ cwd: assets }))
 if (!files.length) throw new Error(`No assets found in ${assets}`)
 
 const notes = path.join(assets, "RELEASE_NOTES.md")
+
+/**
+ * Release notes come from CHANGELOG.md in the app checkout, so a release always
+ * carries the entries the CLI tag claims. Falls back to install instructions when
+ * the version has no section yet.
+ */
+async function changelogSection(): Promise<string | undefined> {
+  const app = process.env.APP_DIR
+  if (!app) return undefined
+  const file = Bun.file(path.join(app, "CHANGELOG.md"))
+  if (!(await file.exists())) return undefined
+  const text = await file.text()
+  const heading = new RegExp(`^##\\s*\\[?v?${version.replace(/\./g, "\\.")}\\]?[^\\n]*$`, "m")
+  const match = heading.exec(text)
+  if (!match) return undefined
+  const rest = text.slice(match.index + match[0].length)
+  const end = /^##\s/m.exec(rest)
+  const section = (end ? rest.slice(0, end.index) : rest).trim()
+  return section || undefined
+}
+
+const changelog = await changelogSection()
+
 await Bun.write(
   notes,
   `## Loophole CLI ${tag}
 
-AI coding agent for the terminal.
-
-### Install
+${changelog ? `${changelog}\n\n### Install` : "AI coding agent for the terminal.\n\n### Install"}
 
 \`\`\`bash
 npm i -g @loophole-ai/cli@${version}
