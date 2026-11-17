@@ -41,6 +41,7 @@ jobs:
             flag: --mac --arm64
             os: darwin
             cpu: arm64
+            install_cpu: "*"
             desktop_target: darwin-arm64
           - target: x86_64-apple-darwin
             host: macos-15-intel
