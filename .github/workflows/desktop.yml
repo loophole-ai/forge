@@ -131,6 +131,7 @@ jobs:
         working-directory: app/packages/desktop
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          OPENCODE_VERSION: ${{ inputs.version }}
         run: bun run build
 
       - name: Package
@@ -138,6 +139,7 @@ jobs:
         timeout-minutes: 60
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          OPENCODE_VERSION: ${{ inputs.version }}
         run: npx electron-builder ${{ matrix.flag }} --publish never --config electron-builder.config.ts
 
       - name: Upload installers
