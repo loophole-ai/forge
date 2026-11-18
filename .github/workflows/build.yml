@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "CLI version to build and publish (e.g. 1.0.8)"
+        description: "CLI version to build and publish (e.g. 1.1.9)"
         required: true
-        default: "1.0.8"
+        default: "1.1.9"
       ref:
         description: "loophole-ai/loophole-app branch holding the source (the fork branch)"
         required: true

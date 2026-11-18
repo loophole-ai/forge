@@ -26,7 +26,7 @@ is what the desktop updater depends on.
 
 ## CLI (`cli-builder`)
 
-Inputs: `version` (e.g. `1.0.8`), `ref` (default `main`), `publish_npm`,
+Inputs: `version` (e.g. `1.1.9`), `ref` (default `main`), `publish_npm`,
 `publish_release`, `publish_homebrew`.
 
 1. Builds all 12 targets on Linux (Bun cross-compiles macOS/Windows)
@@ -35,7 +35,7 @@ Inputs: `version` (e.g. `1.0.8`), `ref` (default `main`), `publish_npm`,
 4. Creates/updates release `v<version>` in **`loophole-ai/cli`**
 5. Optionally updates the Homebrew tap
 
-Tag pushes (`v1.0.8`) run the same pipeline with npm + release enabled.
+Tag pushes (`v1.1.9`) run the same pipeline with npm + release enabled.
 
 ## Desktop (`desktop-builder`)
 
@@ -110,10 +110,10 @@ or write to the release repos.
 
 ```bash
 # CLI publish (after building packages/cli/dist in loophole-app)
-APP_DIR=/path/to/loophole-app LOOPHOLE_VERSION=1.0.8 bun scripts/publish-cli.ts --dry-run
+APP_DIR=/path/to/loophole-app LOOPHOLE_VERSION=1.1.9 bun scripts/publish-cli.ts --dry-run
 
 # Homebrew formula preview
-LOOPHOLE_VERSION=1.0.8 ASSETS_DIR=/path/to/assets bun scripts/homebrew.ts --dry-run
+LOOPHOLE_VERSION=1.1.9 ASSETS_DIR=/path/to/assets bun scripts/homebrew.ts --dry-run
 
 # Desktop release preview (lists the assets it would upload)
 LOOPHOLE_VERSION=1.0.3 DESKTOP_DIST=/path/to/assets GH_TOKEN=dummy \
