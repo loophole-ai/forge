@@ -1,0 +1,108 @@
+name: cli-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "loophole-ai/loophole-app ref to build"
+        required: true
+        default: "ide-merge"
+      run_tests:
+        description: "Run CLI tests"
+        type: boolean
+        default: true
+
+concurrency:
+  group: cli-test-${{ inputs.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: build cli test (${{ inputs.ref }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      APP_DIR: ${{ github.workspace }}/app
+      APP_REF: ${{ inputs.ref }}
+    steps:
+      - name: Checkout forge
+        uses: actions/checkout@v4
+        with:
+          path: forge
+
+      - name: Checkout loophole-app
+        uses: actions/checkout@v4
+        with:
+          repository: loophole-ai/loophole-app
+          ref: ${{ inputs.ref }}
+          path: app
+          fetch-depth: 1
+          token: ${{ secrets.APP_REPO_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: app
+        run: bun install
+
+      - name: Run CLI tests
+        if: inputs.run_tests
+        working-directory: app/packages/cli
+        run: bun test --timeout 30000
+
+      - name: Build CLI (linux-x64 single target)
+        working-directory: app/packages/cli
+        env:
+          OPENCODE_CHANNEL: dev
+        run: bun run script/build.ts --single --skip-web-ui
+
+      - name: Package CLI artifact
+        run: |
+          set -euo pipefail
+          cd "$APP_DIR/packages/cli/dist"
+          ls -la
+          file=$(find . -maxdepth 1 -type f -name 'loophole-cli-*' | head -n 1)
+          if [ -z "$file" ]; then
+            echo "::error::No CLI binary found in dist"
+            exit 1
+          fi
+          file=$(basename "$file")
+          chmod +x "$file"
+          tar -czf "$GITHUB_WORKSPACE/loophole-cli-linux-x64-test.tar.gz" "$file"
+          echo "ARTIFACT=$GITHUB_WORKSPACE/loophole-cli-linux-x64-test.tar.gz" >> "$GITHUB_ENV"
+          echo "ARTIFACT_NAME=$file" >> "$GITHUB_ENV"
+
+      - name: Upload to Gofile
+        id: gofile
+        run: |
+          set -euo pipefail
+          resp=$(curl -fsS -F "file=@${ARTIFACT}" https://upload.gofile.io/uploadfile)
+          echo "$resp"
+          link=$(echo "$resp" | jq -r '.data.downloadPage // empty')
+          if [ -z "$link" ]; then
+            server=$(curl -fsS https://api.gofile.io/servers | jq -r '.data.servers[0].name // empty')
+            if [ -n "$server" ]; then
+              resp=$(curl -fsS -F "file=@${ARTIFACT}" "https://${server}.gofile.io/uploadFile")
+              echo "$resp"
+              link=$(echo "$resp" | jq -r '.data.downloadPage // empty')
+            fi
+          fi
+          if [ -z "$link" ]; then
+            echo "::warning::Gofile upload did not return a download link"
+            exit 0
+          fi
+          echo "link=$link" >> "$GITHUB_OUTPUT"
+          echo "Gofile: $link"
+
+      - name: Upload GitHub artifact
+        if: always() && env.ARTIFACT != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: loophole-cli-linux-x64-test
+          path: ${{ env.ARTIFACT }}
+          if-no-files-found: warn
+          retention-days: 7
