@@ -6,7 +6,7 @@ on:
       ref:
         description: "loophole-ai/loophole-app ref to build"
         required: true
-        default: "ide-merge"
+        default: "code"
       run_tests:
         description: "Run CLI tests"
         type: boolean

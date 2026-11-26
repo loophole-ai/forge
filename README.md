@@ -1,14 +1,14 @@
 # Loophole Forge
 
 Build and release automation for Loophole. This repo contains **no product code**;
-it builds and ships the CLI and the desktop app from the private
+it builds and ships the CLI and the desktop app from the
 `loophole-ai/loophole-app` source repository.
 
 ## Repos
 
 | Repo | Purpose |
 |---|---|
-| `loophole-ai/loophole-app` | Private source repository |
+| `loophole-ai/loophole-app` | Source repository |
 | [`loophole-ai/forge`](https://github.com/loophole-ai/forge) | This repo — build + release automation |
 | [`loophole-ai/cli`](https://github.com/loophole-ai/cli) | CLI release assets only |
 | [`loophole-ai/desktop`](https://github.com/loophole-ai/desktop) | Desktop release assets only |
@@ -101,10 +101,10 @@ brew install loophole-ai/tap/loophole-cli
 | `NPM_TOKEN` | npm granular token, `@loophole-ai`, read/write, **2FA bypass on** | cli-builder |
 | `RELEASE_TOKEN` | GitHub fine-grained PAT with `contents: write` on `loophole-ai/cli`, `loophole-ai/desktop`, and `loophole-ai/homebrew-tap` | all workflows |
 | `HOMEBREW_TAP_TOKEN` | optional, overrides `RELEASE_TOKEN` for the tap | homebrew |
-| `APP_REPO_TOKEN` | GitHub fine-grained PAT with `contents: read` on the private `loophole-ai/loophole-app` | cli-builder, desktop-builder |
+| `APP_REPO_TOKEN` | GitHub fine-grained PAT with `contents: read` on `loophole-ai/loophole-app` | cli-builder, desktop-builder |
 
-`GITHUB_TOKEN` alone is not enough: this repo cannot read the private source repo
-or write to the release repos.
+`GITHUB_TOKEN` alone is not enough to write to the release repos. `APP_REPO_TOKEN`
+is used to check out `loophole-ai/loophole-app` during builds.
 
 ## Local usage
 
