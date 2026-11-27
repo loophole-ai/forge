@@ -74,6 +74,12 @@ log "allowing cleartext traffic to the user's own server"
 sed -i 's|<application|<application android:usesCleartextTraffic="true"|' "$MANIFEST"
 grep -q 'usesCleartextTraffic="true"' "$MANIFEST" || die "could not patch AndroidManifest.xml"
 
+# The QR pairing scanner uses the WebView camera (getUserMedia). Android only shows a permission prompt, and
+# only lists the permission in app settings, when the manifest declares it.
+log "declaring camera permission"
+sed -i 's|</manifest>|    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>|' "$MANIFEST"
+grep -q 'android.permission.CAMERA' "$MANIFEST" || die "could not add camera permission"
+
 log "launcher icons"
 # Use the plain PNG launcher icons: drop Capacitor's adaptive-icon definitions and its foreground layers.
 rm -rf "$RES/mipmap-anydpi-v26"
