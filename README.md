@@ -22,6 +22,7 @@ is what the desktop updater depends on.
 |---|---|
 | `cli-builder` | Builds 12 CLI targets, publishes npm packages, creates release `v<version>` in `loophole-ai/cli` |
 | `desktop-builder` | Packages macOS/Windows/Linux installers, creates release `v<version>` in `loophole-ai/desktop` |
+| `mobile-builder` | Builds the web app and wraps it as a debug-signed Android APK (Capacitor); uploads the APK and a static web bundle as workflow artifacts |
 | `homebrew` | Updates `loophole-ai/homebrew-tap` without rebuilding |
 
 ## CLI (`cli-builder`)
@@ -81,6 +82,47 @@ Desktop builds are **unsigned** by default:
 To sign later, add the Apple certificate/API key and Azure Trusted Signing
 secrets and drop `CSC_IDENTITY_AUTO_DISCOVERY`.
 
+## Mobile (`mobile-builder`)
+
+`loophole-app` has no native mobile project, so this workflow generates one on every run
+(`scripts/android-prepare.sh`) and nothing mobile-specific is committed to the app repo.
+
+Inputs: `version` (e.g. `1.0.0`), `ref` (default `code`).
+
+1. Checks out `loophole-ai/loophole-app`, builds `packages/app` for production with no default server
+2. Zips the static web bundle (`loophole-web-<version>.zip`)
+3. Creates an Android project with Capacitor, applies the Loophole name, version and launcher icon
+   (from `assets/packages/desktop/icons/prod/icon.png`), and builds `assembleDebug`
+4. Uploads `loophole-android-<version>.apk`, the web bundle and `SHA256SUMS` as a workflow artifact
+   (kept 30 days)
+
+The APK is signed with the debug key, so it can be sideloaded but not published to the Play Store.
+iOS is not built: it needs a Mac runner and Apple signing.
+
+### What the phone needs from your server
+
+The app starts with no server. In the app, add your Loophole server's URL and pair it with a code
+from `loophole-cli pair`. The server must be reachable from the phone and must accept the app's
+origin, which neither does by default:
+
+```bash
+# one-off
+loophole-cli serve --hostname 0.0.0.0 --cors http://localhost
+
+# or, for the background service
+loophole-cli service set hostname 0.0.0.0
+loophole-cli service set cors http://localhost
+```
+
+Without the `cors` setting the server rejects the app's requests, because the Android WebView's
+origin is `http://localhost` (no port) and only `http://localhost:<port>` is allowed by default.
+
+### Using the web bundle instead
+
+`loophole-web-<version>.zip` is the same app as a plain static site. Host it on any HTTPS host and
+install it to the home screen from the phone's browser. Installing a PWA requires HTTPS, and an
+HTTPS page can only call an HTTPS server, so this route needs the server behind HTTPS too.
+
 ## Homebrew (`homebrew`)
 
 Manual workflow, input `version`. Regenerates `Formula/loophole-cli.rb` and pushes it
@@ -101,7 +143,7 @@ brew install loophole-ai/tap/loophole-cli
 | `NPM_TOKEN` | npm granular token, `@loophole-ai`, read/write, **2FA bypass on** | cli-builder |
 | `RELEASE_TOKEN` | GitHub fine-grained PAT with `contents: write` on `loophole-ai/cli`, `loophole-ai/desktop`, and `loophole-ai/homebrew-tap` | all workflows |
 | `HOMEBREW_TAP_TOKEN` | optional, overrides `RELEASE_TOKEN` for the tap | homebrew |
-| `APP_REPO_TOKEN` | GitHub fine-grained PAT with `contents: read` on `loophole-ai/loophole-app` | cli-builder, desktop-builder |
+| `APP_REPO_TOKEN` | GitHub fine-grained PAT with `contents: read` on `loophole-ai/loophole-app` | cli-builder, desktop-builder, mobile-builder |
 
 `GITHUB_TOKEN` alone is not enough to write to the release repos. `APP_REPO_TOKEN`
 is used to check out `loophole-ai/loophole-app` during builds.

@@ -1,0 +1,112 @@
+name: mobile-builder
+
+# Builds the Loophole web app and wraps it as an Android APK (Capacitor).
+# loophole-app has no native mobile project: the Android project is generated on every
+# run by scripts/android-prepare.sh, so nothing mobile-specific lives in the app repo.
+#
+# Outputs (workflow artifacts, kept 30 days):
+#   loophole-android-<version>.apk   debug-signed APK, installable by sideloading
+#   loophole-web-<version>.zip       the static web app, deployable behind any HTTPS host
+#   SHA256SUMS
+#
+# Not covered: iOS (needs a Mac runner and Apple signing) and Play Store release signing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Mobile version (e.g. 1.0.0)"
+        required: true
+        default: "1.0.0"
+      ref:
+        description: "loophole-ai/loophole-app branch to build from"
+        required: true
+        default: "code"
+
+concurrency:
+  group: mobile-builder-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: android ${{ inputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      VERSION: ${{ inputs.version }}
+      APP_DIR: ${{ github.workspace }}/app
+      WORK_DIR: ${{ github.workspace }}/mobile
+      OUT_DIR: ${{ github.workspace }}/out
+    steps:
+      - name: Checkout builder
+        uses: actions/checkout@v5
+        with:
+          path: builder
+
+      - name: Checkout loophole-app
+        uses: actions/checkout@v5
+        with:
+          repository: loophole-ai/loophole-app
+          ref: ${{ inputs.ref || 'code' }}
+          path: app
+          fetch-depth: 1
+          token: ${{ secrets.APP_REPO_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        working-directory: app
+        run: bun install
+
+      # No default server: the phone app starts empty and the user adds their own Loophole server.
+      - name: Build web app
+        working-directory: app/packages/app
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          OPENCODE_CHANNEL: prod
+          VITE_OPENCODE_SERVER_MODE: none
+          VITE_OPENCODE_VERSION: ${{ inputs.version }}
+        run: bun run build
+
+      - name: Strip sourcemaps
+        run: find app/packages/app/dist -name '*.map' -delete
+
+      - name: Package web bundle
+        run: |
+          mkdir -p "$OUT_DIR"
+          (cd app/packages/app/dist && zip -qr "$OUT_DIR/loophole-web-$VERSION.zip" .)
+
+      - name: Prepare Android project
+        run: bash builder/scripts/android-prepare.sh
+
+      - name: Build APK
+        working-directory: mobile/android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Collect outputs
+        run: |
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk "$OUT_DIR/loophole-android-$VERSION.apk"
+          (cd "$OUT_DIR" && sha256sum loophole-* > SHA256SUMS && cat SHA256SUMS)
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: loophole-mobile-${{ inputs.version }}
+          if-no-files-found: error
+          retention-days: 30
+          path: out/*
