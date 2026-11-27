@@ -4,10 +4,12 @@ name: mobile-builder
 # loophole-app has no native mobile project: the Android project is generated on every
 # run by scripts/android-prepare.sh, so nothing mobile-specific lives in the app repo.
 #
-# Outputs (workflow artifacts, kept 30 days):
+# Outputs (workflow artifacts, kept 30 days, and a Gofile link unless upload_gofile is off):
 #   loophole-android-<version>.apk   debug-signed APK, installable by sideloading
 #   loophole-web-<version>.zip       the static web app, deployable behind any HTTPS host
 #   SHA256SUMS
+#
+# Optional secret: GOFILE_TOKEN stores the upload in your Gofile account instead of a guest account.
 #
 # Not covered: iOS (needs a Mac runner and Apple signing) and Play Store release signing.
 
@@ -22,6 +24,10 @@ on:
         description: "loophole-ai/loophole-app branch to build from"
         required: true
         default: "code"
+      upload_gofile:
+        description: "Also upload the APK, web bundle and checksums to Gofile"
+        type: boolean
+        default: true
 
 concurrency:
   group: mobile-builder-${{ github.ref }}
@@ -91,6 +97,10 @@ jobs:
           mkdir -p "$OUT_DIR"
           (cd app/packages/app/dist && zip -qr "$OUT_DIR/loophole-web-$VERSION.zip" .)
 
+      # The runner image does not always include ImageMagick (used to render the launcher icons).
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends imagemagick
+
       - name: Prepare Android project
         run: bash builder/scripts/android-prepare.sh
 
@@ -110,3 +120,9 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           path: out/*
+
+      - name: Upload to Gofile
+        if: inputs.upload_gofile
+        env:
+          GOFILE_TOKEN: ${{ secrets.GOFILE_TOKEN }}
+        run: bash builder/scripts/gofile-upload.sh "out/loophole-android-$VERSION.apk" "out/loophole-web-$VERSION.zip" out/SHA256SUMS

@@ -32,7 +32,12 @@ VERSION_CODE=$(( BASH_REMATCH[1] * 10000 + BASH_REMATCH[2] * 100 + BASH_REMATCH[
 
 [ -f "$DIST/index.html" ] || die "web app is not built: $DIST/index.html is missing"
 [ -f "$ICON" ] || die "Loophole icon not found: $ICON"
-command -v convert >/dev/null || die "ImageMagick 'convert' is required"
+# ImageMagick 7 ships `magick`; ImageMagick 6 ships `convert`. Runner images differ, so accept either.
+# IM_BIN can force a specific binary.
+if [ -n "${IM_BIN:-}" ]; then IM="$IM_BIN"
+elif command -v magick >/dev/null; then IM=magick
+elif command -v convert >/dev/null; then IM=convert
+else die "ImageMagick is required (neither 'magick' nor 'convert' found)"; fi
 
 log "creating Capacitor project in $WORK_DIR"
 rm -rf "$WORK_DIR"
@@ -76,14 +81,14 @@ find "$RES" -name 'ic_launcher_foreground.png' -delete
 for pair in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
   density="${pair%%:*}"; size="${pair##*:}"
   for name in ic_launcher ic_launcher_round; do
-    convert "$ICON" -resize "${size}x${size}" "PNG32:$RES/mipmap-$density/$name.png"
+    "$IM" "$ICON" -resize "${size}x${size}" "PNG32:$RES/mipmap-$density/$name.png"
   done
 done
 
 log "launch screen"
 # Replace Capacitor's default splash artwork with a flat colour that matches the app background.
 while IFS= read -r -d '' file; do
-  convert -size 2x2 "xc:$BACKGROUND" "PNG32:$file"
+  "$IM" -size 2x2 "xc:$BACKGROUND" "PNG32:$file"
 done < <(find "$RES" -path '*drawable*' -name 'splash.png' -print0)
 
 log "android project ready: $WORK_DIR/android"

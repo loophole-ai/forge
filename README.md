@@ -87,7 +87,7 @@ secrets and drop `CSC_IDENTITY_AUTO_DISCOVERY`.
 `loophole-app` has no native mobile project, so this workflow generates one on every run
 (`scripts/android-prepare.sh`) and nothing mobile-specific is committed to the app repo.
 
-Inputs: `version` (e.g. `1.0.0`), `ref` (default `code`).
+Inputs: `version` (e.g. `1.0.0`), `ref` (default `code`), `upload_gofile` (default on).
 
 1. Checks out `loophole-ai/loophole-app`, builds `packages/app` for production with no default server
 2. Zips the static web bundle (`loophole-web-<version>.zip`)
@@ -95,6 +95,10 @@ Inputs: `version` (e.g. `1.0.0`), `ref` (default `code`).
    (from `assets/packages/desktop/icons/prod/icon.png`), and builds `assembleDebug`
 4. Uploads `loophole-android-<version>.apk`, the web bundle and `SHA256SUMS` as a workflow artifact
    (kept 30 days)
+5. Uploads the same three files to Gofile (`scripts/gofile-upload.sh`) and prints one shared download
+   link in the job summary and the `Upload to Gofile` step output. Without a `GOFILE_TOKEN` secret the
+   files go to a new guest account; Gofile decides how long guest files are kept. Set `GOFILE_TOKEN`
+   to keep them in your own account instead.
 
 The APK is signed with the debug key, so it can be sideloaded but not published to the Play Store.
 iOS is not built: it needs a Mac runner and Apple signing.
@@ -144,6 +148,7 @@ brew install loophole-ai/tap/loophole-cli
 | `RELEASE_TOKEN` | GitHub fine-grained PAT with `contents: write` on `loophole-ai/cli`, `loophole-ai/desktop`, and `loophole-ai/homebrew-tap` | all workflows |
 | `HOMEBREW_TAP_TOKEN` | optional, overrides `RELEASE_TOKEN` for the tap | homebrew |
 | `APP_REPO_TOKEN` | GitHub fine-grained PAT with `contents: read` on `loophole-ai/loophole-app` | cli-builder, desktop-builder, mobile-builder |
+| `GOFILE_TOKEN` | optional, your Gofile account token (profile page); without it uploads use a guest account | mobile-builder |
 
 `GITHUB_TOKEN` alone is not enough to write to the release repos. `APP_REPO_TOKEN`
 is used to check out `loophole-ai/loophole-app` during builds.
